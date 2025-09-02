@@ -80,7 +80,7 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
 
             // Authentication is handled by the background script
             const response = await new Promise<{ success: boolean; echoUser?: EchoUser; error?: string }>((resolve, reject) => {
-                chrome.runtime.sendMessage({action: 'AUTHENTICATE', params: { echoClientId: 'cc741099-df7c-47ed-8c95-3a8a61ab1217', echoBaseUrl: 'https://echo.merit.systems' }}, (response) => {
+                chrome.runtime.sendMessage({action: 'AUTHENTICATE', params: { echoClientId: '3df07026-b25a-4797-93af-f35bdd3a7c86', echoBaseUrl: 'https://echo.merit.systems' }}, (response) => {
                     if (chrome.runtime.lastError) {
                         reject(new Error(chrome.runtime.lastError.message));
                         return;
