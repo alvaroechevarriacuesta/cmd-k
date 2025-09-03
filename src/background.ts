@@ -47,7 +47,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                         echo_refresh_token_expires_at: response.tokenData.refreshTokenExpiresAt,
                     });
                 }
-
+                console.log('Successfully authenticated');
                 sendResponse(response);
             });
             break;

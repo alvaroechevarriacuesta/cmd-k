@@ -147,7 +147,7 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
     const getToken = async (): Promise<string | null> => {
         try {
             const response = await new Promise<{ token: string | null }>((resolve, reject) => {
-                chrome.runtime.sendMessage({action: 'GET_TOKEN'}, (response) => {
+                chrome.runtime.sendMessage({action: 'GET_TOKEN', params: { echoBaseUrl: 'https://echo.merit.systems', echoClientId: '3df07026-b25a-4797-93af-f35bdd3a7c86' }}, (response) => {
                     if (chrome.runtime.lastError) {
                         reject(new Error(chrome.runtime.lastError.message));
                         return;

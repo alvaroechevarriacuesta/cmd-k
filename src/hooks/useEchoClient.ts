@@ -46,7 +46,7 @@ export function useEchoClient({ apiUrl }: UseEchoClientOptions)  {
             getTokenFn: () => Promise.resolve(token || null),
             refreshTokenFn: async (): Promise<string> => {
                 return new Promise((resolve, reject) => {
-                    chrome.runtime.sendMessage({ action: 'REFRESH_TOKEN' }, (response) => {
+                    chrome.runtime.sendMessage({ action: 'REFRESH_TOKEN', params: { echoBaseUrl: apiUrl, echoClientId: '3df07026-b25a-4797-93af-f35bdd3a7c86' } }, (response) => {
                         if (response.success && response.token) {
                             resolve(response.token);
                         } else {

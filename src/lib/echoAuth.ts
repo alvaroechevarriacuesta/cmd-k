@@ -64,8 +64,6 @@ export const authenticate = async (message: { params: { echoClientId: string; ec
     });
 }
 
-
-
 export const refreshTokens = async (refreshToken: string, echoBaseUrl: string, echoClientId: string, sendResponse: (response: { success: boolean; error?: string, tokenData?: AuthenticateUserResponse }) => void) => {
     try {
         const redirectUrl = chrome.identity.getRedirectURL();
