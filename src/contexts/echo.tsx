@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { EchoContext, type EchoContextValue } from '@/hooks/useEcho';
 import type { EchoUser, EchoBalance } from '@/types/echo';
+import { useEchoClient } from '@/hooks/useEchoClient';
 
 interface EchoProviderProps {
     children: React.ReactNode,
@@ -134,7 +135,8 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
         // TODO: Implement balance refresh
     };
 
-    
+    const echoClient = useEchoClient({ apiUrl: 'https://echo.merit.systems' });
+
 
     const createPaymentLink = async (amount: number, description: string, successUrl?: string): Promise<string> => {
         // TODO: Implement payment link creation
