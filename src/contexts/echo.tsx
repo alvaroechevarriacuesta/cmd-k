@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { EchoContext, type EchoContextValue } from '@/hooks/useEcho';
 import type { EchoUser, EchoBalance } from '@/types/echo';
 import { useEchoClient } from '@/hooks/useEchoClient';
@@ -26,8 +26,8 @@ const checkAuthStatus = async (): Promise<{ isAuthenticated: boolean; user: Echo
 
 export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
     const [user, setUser] = useState<EchoUser | null>(null);
-    const [balance, setBalance] = useState<EchoBalance | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [balance, setBalance] = useState<EchoBalance | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
@@ -45,7 +45,6 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
             setIsAuthenticated(false);
             setUser(null);
             setToken(null);
-            setBalance(null);
         } finally {
             setIsLoading(false);
         }
@@ -131,12 +130,26 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
         }
     };
 
-    const refreshBalance = async () => {
-        // TODO: Implement balance refresh
-    };
-
     const echoClient = useEchoClient({ apiUrl: 'https://echo.merit.systems' });
 
+    const refreshBalance = useCallback(async () => {
+        const balance = await echoClient?.balance.getBalance();
+        if (balance) {
+            const echoBalance: EchoBalance = {
+                totalPaid: balance.totalPaid,
+                totalSpent: balance.totalSpent,
+                balance: balance.balance,
+                currency: 'USD' // Balance from SDK doesn't include currency, defaulting to USD
+            };
+            setBalance(echoBalance);
+        } else {
+            setBalance(null);
+        }
+    }, [echoClient]);
+
+    useEffect(() => {
+        refreshBalance();
+    }, [refreshBalance]);
 
     const createPaymentLink = async (amount: number, description: string, successUrl?: string): Promise<string> => {
         // TODO: Implement payment link creation

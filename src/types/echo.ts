@@ -14,6 +14,8 @@ export interface AuthenticateUserResponse {
 }
 
 export interface EchoBalance {
-    credits: number;
+    totalPaid: number;
+    totalSpent: number;
+    balance: number;
     currency: string;
 } 

@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@merit-systems/echo-react-sdk": "^1.0.17",
     "@merit-systems/echo-typescript-sdk": "^1.0.8",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",

@@ -6,8 +6,11 @@ import { EchoSignin } from '@/components/ui/echo-sign-in';
 export function Navbar() {
     const { 
         user,
+        balance,
         isAuthenticated,
       } = useEcho();
+
+    console.log('balance', balance);
 
     return (
         <>
@@ -24,6 +27,7 @@ export function Navbar() {
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="text-sm">{user?.name || user?.email}</p>
+                  <p className="text-sm">{balance?.balance.toFixed(2)} {balance?.currency}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <EchoSignin />
