@@ -47,6 +47,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                         echo_refresh_token_expires_at: response.tokenData.refreshTokenExpiresAt,
                     });
                 }
+
                 sendResponse(response);
             });
             break;
@@ -84,6 +85,35 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
             });
             break;
+            case 'REFRESH_TOKEN':
+                console.log('Getting Echo token')
+                chrome.storage.local.get([
+                    'echo_access_token',
+                    'echo_access_token_expires_at',
+                    'echo_refresh_token',
+                    'echo_refresh_token_expires_at'
+                ], (result) => {
+                    const now = Date.now();
+                    if (result.echo_access_token && result.echo_access_token_expires_at && now < result.echo_access_token_expires_at) {
+                        sendResponse({ token: result.echo_access_token });
+                    } else {
+                        refreshTokens(result.echo_refresh_token, message.params.echoBaseUrl, message.params.echoClientId, async (response) => {
+                        if (response.success && response.tokenData) {
+                            chrome.storage.local.set({
+                                echo_access_token: response.tokenData.accessToken,
+                                echo_access_token_expires_at: response.tokenData.accessTokenExpiresAt,
+                                echo_refresh_token: response.tokenData.refreshToken,
+                                echo_refresh_token_expires_at: response.tokenData.refreshTokenExpiresAt,
+                            });
+                                sendResponse({ token: response.tokenData.accessToken });
+                            } else {
+                                console.error('Error refreshing tokens:', response.error);
+                                sendResponse({ token: null });
+                            }
+                        });
+                    }
+                });
+                break;
         case 'CHECK_AUTH':
             chrome.storage.local.get([
                 'echo_user',

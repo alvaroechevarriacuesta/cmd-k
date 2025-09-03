@@ -1,5 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useEchoOpenAI } from '@/hooks/useEchoOpenAi';
+import React, { useState, useRef } from 'react';
+import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
+import {generateText } from 'ai';
+import { useEcho } from '@/hooks/useEcho';
+import { WelcomePage } from './welcome';
 
 interface Message {
   id: string;
@@ -9,20 +12,13 @@ interface Message {
 }
 
 export const Chat: React.FC = () => {
+  const { isAuthenticated } = useEcho();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { openai, isReady, error, isLoading } = useEchoOpenAI();
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const { openai } = useEchoModelProviders();
 
   const handleSendMessage = async () => {
     if (!openai || !input.trim() || isGenerating) return;
@@ -37,34 +33,13 @@ export const Chat: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsGenerating(true);
-
-    try {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+      const response = await generateText({
+        model: await openai('gpt-4'),
         messages: [{ role: 'user', content: userMessage.text }],
-        max_tokens: 150,
-      });
-
-      const response = completion.choices[0]?.message?.content || 'No response';
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      const errorMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `Error: ${errorMessage}`,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
-    } finally {
+      })
+      setMessages(prev => [...prev, { id: Date.now().toString(), text: response.text, isUser: false, timestamp: new Date() }]);
       setIsGenerating(false);
-    }
+      return response;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -73,21 +48,8 @@ export const Chat: React.FC = () => {
       handleSendMessage();
     }
   };
-
-  if (!isReady) {
-    return (
-      <div className="relative flex min-h-0 w-full flex-col h-full">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full h-full p-4">
-            <div className="min-h-[100px] min-w-[200px] bg-gray-700 rounded-lg p-4">
-              <p className="text-white text-center">
-                {isLoading ? 'Loading OpenAI...' : error || 'Please sign in to start chatting'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  if (!isAuthenticated) {
+    return <WelcomePage />;
   }
 
   return (
@@ -147,7 +109,7 @@ export const Chat: React.FC = () => {
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
             className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px] overflow-y-auto"
-            disabled={!isReady || isGenerating}
+            disabled={ isGenerating}
             rows={1}
             style={{
               minHeight: '40px',
@@ -162,7 +124,7 @@ export const Chat: React.FC = () => {
           />
           <button
             onClick={handleSendMessage}
-            disabled={!input.trim() || !isReady || isGenerating}
+            disabled={!input.trim() || isGenerating}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 self-end"
           >
             Send
