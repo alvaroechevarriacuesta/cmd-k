@@ -64,6 +64,48 @@ export const authenticate = async (message: { params: { echoClientId: string; ec
     });
 }
 
+
+
+export const refreshTokens = async (refreshToken: string, echoBaseUrl: string, echoClientId: string, sendResponse: (response: { success: boolean; error?: string, tokenData?: AuthenticateUserResponse }) => void) => {
+    try {
+        const redirectUrl = chrome.identity.getRedirectURL();
+        const response = await fetch(`${echoBaseUrl}/api/oauth/token`, {
+            method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: echoClientId,
+          refresh_token: refreshToken,
+          redirect_uri: redirectUrl + 'echo/callback',
+        }),
+    });
+    console.log('token exchange reponse status:', response.status);
+
+    if (!response.ok) {
+        const data = await response.json();
+        console.log('token exchange error:', data);
+        throw new Error(data.error || 'Token exchange failed');
+    }
+
+    const tokenData = await response.json();
+    const userData: AuthenticateUserResponse = {
+        user: tokenData.user,
+        accessToken: tokenData.access_token,
+        accessTokenExpiresAt: Date.now() + tokenData.expires_in * 1000,
+        refreshToken: tokenData.refresh_token,
+        refreshTokenExpiresAt: Date.now() + tokenData.refresh_token_expires_in * 1000,
+    };
+    sendResponse({
+        success: true,
+        tokenData: userData,
+    });
+
+} catch (error) {
+    console.error('Error refreshing tokens:', error);
+    throw error;
+}
+} 
+
 const exchangeCodeForToken = async (authorizationCode: string, codeVerifier: string, echoBaseUrl: string, echoClientId: string) => {
     try {
         const redirectUrl = chrome.identity.getRedirectURL();

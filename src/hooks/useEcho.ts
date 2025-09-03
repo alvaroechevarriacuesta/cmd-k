@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EchoUser, EchoBalance } from '@/types/echo';
+import type { EchoClient } from '@merit-systems/echo-typescript-sdk';
 
 
 
@@ -10,6 +11,7 @@ interface EchoContextValue {
     isLoading: boolean;
     error: string | null;
     token: string | null;
+    echoClient: EchoClient | null;
     signIn: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshBalance: () => Promise<void>;
