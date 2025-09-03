@@ -134,6 +134,8 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
         // TODO: Implement balance refresh
     };
 
+    
+
     const createPaymentLink = async (amount: number, description: string, successUrl?: string): Promise<string> => {
         // TODO: Implement payment link creation
         console.log('Creating payment link:', { amount, description, successUrl });
@@ -169,6 +171,7 @@ export const EchoProvider: React.FC<EchoProviderProps> = ({ children }) => {
         isLoading,
         error,
         token,
+        echoClient,
         signIn,
         signOut,
         refreshBalance,
