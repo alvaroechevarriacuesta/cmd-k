@@ -12,7 +12,7 @@ interface Message {
 }
 
 export const Chat: React.FC = () => {
-  const { isAuthenticated, echoClient } = useEcho();
+  const { echoClient } = useEcho();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -81,9 +81,6 @@ export const Chat: React.FC = () => {
       handleSendMessage();
     }
   };
-  if (!isAuthenticated) {
-    return <WelcomePage />;
-  }
 
   return (
     <div className="relative flex min-h-0 w-full flex-col h-full">
