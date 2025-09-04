@@ -9,8 +9,10 @@ export function Navbar() {
         balance,
         isAuthenticated,
       } = useEcho();
+    
 
     console.log('balance', balance);
+    console.log('user', user);
 
     return (
         <>

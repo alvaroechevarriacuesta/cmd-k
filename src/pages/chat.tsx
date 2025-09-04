@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
 import {generateText } from 'ai';
 import { useEcho } from '@/hooks/useEcho';
@@ -12,13 +12,46 @@ interface Message {
 }
 
 export const Chat: React.FC = () => {
-  const { isAuthenticated } = useEcho();
+  const { isAuthenticated, echoClient } = useEcho();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [modelsByProvider, setModelsByProvider] = useState<Record<string, string[]>>({});
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { openai } = useEchoModelProviders();
+
+  // Fetch supported models when echoClient is available
+  useEffect(() => {
+    const fetchModels = async () => {
+      if (!echoClient) return;
+      
+      setIsLoadingModels(true);
+      try {
+        const supportedModels = await echoClient.models.listSupportedChatModels();
+        
+        // Group models by provider
+        const grouped = supportedModels.reduce((acc, model) => {
+          const provider = model.provider || 'Unknown';
+          if (!acc[provider]) {
+            acc[provider] = [];
+          }
+          acc[provider].push(model.model_id);
+          return acc;
+        }, {} as Record<string, string[]>);
+        
+        setModelsByProvider(grouped);
+      } catch (error) {
+        console.error('Error fetching models:', error);
+        setModelsByProvider({});
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchModels();
+  }, [echoClient]);
 
   const handleSendMessage = async () => {
     if (!openai || !input.trim() || isGenerating) return;
@@ -58,9 +91,44 @@ export const Chat: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center text-gray-400">
-              <p className="text-lg font-medium">Welcome to the chat!</p>
-              <p className="text-sm">Start typing to begin a conversation.</p>
+            <div className="text-center text-gray-400 max-w-md">
+              <p className="text-lg font-medium mb-4">Welcome to the chat!</p>
+              <p className="text-sm mb-6">Start typing to begin a conversation.</p>
+              
+              {isLoadingModels ? (
+                <div className="mb-4">
+                  <p className="text-sm mb-2">Loading available models...</p>
+                  <div className="flex justify-center">
+                    <div className="w-4 h-4 bg-gray-400 rounded-full animate-bounce"></div>
+                  </div>
+                </div>
+              ) : Object.keys(modelsByProvider).length > 0 ? (
+                <div className="mb-4">
+                  <p className="text-sm font-medium mb-3">Available Models:</p>
+                  <div className="space-y-4 text-xs">
+                    {Object.entries(modelsByProvider).map(([provider, models]) => (
+                      <div key={provider} className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+                          {provider}
+                        </p>
+                        <div className="grid grid-cols-1 gap-1 ml-2">
+                          {models.map((model, index) => (
+                            <div 
+                              key={index}
+                              className="bg-gray-700 rounded-md px-3 py-1.5 text-gray-300 flex justify-between items-center"
+                            >
+                              <span>{model}</span>
+                              <span className="text-xs text-gray-400 bg-gray-600 px-2 py-0.5 rounded">
+                                {provider}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : (
@@ -109,7 +177,6 @@ export const Chat: React.FC = () => {
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
             className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px] overflow-y-auto"
-            disabled={ isGenerating}
             rows={1}
             style={{
               minHeight: '40px',
