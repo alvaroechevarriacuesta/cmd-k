@@ -1,7 +1,7 @@
 import { useEcho } from '@/hooks/useEcho';
 
-import { Chat } from '@/pages/chat';
 import { WelcomePage } from '@/pages/welcome';
+import { ChatWindow } from './ChatWindow';
 
 export const MainChat: React.FC = () => {
   const { 
@@ -10,8 +10,14 @@ export const MainChat: React.FC = () => {
 
   return (
     <div className="flex h-full w-full items-center justify-center">
-      {isAuthenticated ? <Chat /> : <WelcomePage />}
+      {isAuthenticated ? <ChatWindow /> : <WelcomePage />}
     </div>
   );
 };
+
+// Export individual chat components
+export { ChatWindow } from './ChatWindow';
+export { MessageList } from './MessageList';
+export { ChatInput } from './ChatInput';
+export type { Message } from './ChatWindow';
 
