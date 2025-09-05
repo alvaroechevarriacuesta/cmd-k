@@ -144,6 +144,77 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 sendResponse({ success: true });
             });
             break;
+        case 'GET_TAB_CONTENT':
+            chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+                const activeTab = tabs[0];
+                console.log('Fetching content from active tab:', activeTab?.url, 'Tab ID:', activeTab?.id);
+                if (!activeTab || !activeTab.id) {
+                    sendResponse({ content: null, url: null, title: null });
+                    return;
+                }
+
+                try {
+                    // Inject content script to extract page content
+                    const results = await chrome.scripting.executeScript({
+                        target: { tabId: activeTab.id },
+                        func: () => {
+                            // Get main content, preferring article, main, or body
+                            const contentSelectors = ['article', 'main', '[role="main"]', 'body'];
+                            let contentElement = document.body;
+                            
+                            for (const selector of contentSelectors) {
+                                const element = document.querySelector(selector) as HTMLElement;
+                                if (element && element.textContent && element.textContent.trim().length > 100) {
+                                    contentElement = element;
+                                    break;
+                                }
+                            }
+                            
+                            // Clone the content element to avoid modifying the original page
+                            const clonedElement = contentElement.cloneNode(true) as HTMLElement;
+                            
+                            // Remove script tags, style tags, and other non-content elements from the CLONE
+                            const scriptsToRemove = clonedElement.querySelectorAll('script, style, noscript, iframe, embed, object');
+                            scriptsToRemove.forEach(el => el.remove());
+                            
+                            // Extract text content and clean it up from the cloned element
+                            let text = clonedElement.innerText || clonedElement.textContent || '';
+                            
+                            // Clean up whitespace and normalize
+                            text = text
+                                .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
+                                .replace(/\n\s*\n/g, '\n')  // Remove empty lines
+                                .trim();
+                            
+                            // Limit content length to avoid token limits (approximately 8000 characters)
+                            if (text.length > 8000) {
+                                text = text.substring(0, 8000) + '...';
+                            }
+                            
+                            return {
+                                content: text,
+                                url: window.location.href,
+                                title: document.title
+                            };
+                        }
+                    });
+
+                    const tabData = results[0]?.result;
+                    sendResponse({
+                        content: tabData?.content || null,
+                        url: tabData?.url || activeTab.url,
+                        title: tabData?.title || activeTab.title
+                    });
+                } catch (error) {
+                    console.error('Error getting tab content:', error);
+                    sendResponse({
+                        content: null,
+                        url: activeTab.url,
+                        title: activeTab.title
+                    });
+                }
+            });
+            break;
     }
     return true; // Keep the message channel open for async responses
 });

@@ -9,6 +9,7 @@ export default defineManifest({
         default_path: 'index.html'
     },
     permissions: ['sidePanel', 'tabs', 'identity', 'storage', 'activeTab', 'scripting'],
+    host_permissions: ['<all_urls>'],
     background: {
         service_worker: 'src/background.ts',
         type: 'module'

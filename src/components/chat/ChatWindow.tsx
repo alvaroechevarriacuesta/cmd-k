@@ -3,6 +3,7 @@ import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
 import { generateText } from 'ai';
 import { MessageList } from '@/components/chat/MessageList';
 import { ChatInput } from '@/components/chat/ChatInput';
+import { getCurrentTabContent, formatTabContentForPrompt } from '@/lib/tabContent';
 
 export interface Message {
   id: string;
@@ -14,6 +15,7 @@ export interface Message {
 export const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isFetchingContext, setIsFetchingContext] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { openai } = useEchoModelProviders();
@@ -36,14 +38,28 @@ export const ChatWindow: React.FC = () => {
     // Update messages with the new user message
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    setIsGenerating(true);
+    setIsFetchingContext(true);
 
     try {
+      // Fetch current tab content
+      const tabContent = await getCurrentTabContent();
+      setIsFetchingContext(false);
+      setIsGenerating(true);
+      
       // Convert conversation history to AI SDK format
-      const conversationHistory = updatedMessages.map(msg => ({
-        role: (msg.isUser ? 'user' : 'assistant') as 'user' | 'assistant',
-        content: msg.text,
-      }));
+      const conversationHistory = updatedMessages.map((msg, index) => {
+        let content = msg.text;
+        
+        // Add tab content as context to the latest user message
+        if (msg.isUser && index === updatedMessages.length - 1 && tabContent.content) {
+          content = `${msg.text}${formatTabContentForPrompt(tabContent)}`;
+        }
+        
+        return {
+          role: (msg.isUser ? 'user' : 'assistant') as 'user' | 'assistant',
+          content,
+        };
+      });
 
       const response = await generateText({
         model: await openai('gpt-4'),
@@ -68,6 +84,7 @@ export const ChatWindow: React.FC = () => {
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
+      setIsFetchingContext(false);
       setIsGenerating(false);
     }
   };
@@ -76,13 +93,14 @@ export const ChatWindow: React.FC = () => {
     <div className="relative flex min-h-0 w-full flex-col h-full">
       <MessageList 
         messages={messages}
-        isGenerating={isGenerating}
+        isGenerating={isGenerating || isFetchingContext}
         messagesEndRef={messagesEndRef}
       />
       <ChatInput 
         onSend={handleSendMessage}
         disabled={!openai}
         isGenerating={isGenerating}
+        isFetchingContext={isFetchingContext}
       />
     </div>
   );
