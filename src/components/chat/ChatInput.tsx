@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import type { ProviderModel } from './ChatWindow';
+import { useEchoModels } from '@/hooks/useEchoModels';
+import { type SupportedModel } from '@merit-systems/echo-typescript-sdk';
 
 interface ChatInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
   isGenerating?: boolean;
   isFetchingContext?: boolean;
-  providerModel: ProviderModel;
-  setProviderModel: (providerModel: ProviderModel) => void;
+  providerModel?: SupportedModel;
+  setProviderModel: (providerModel: SupportedModel) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, isGenerating = false, isFetchingContext = false, providerModel, setProviderModel }) => {
   const [input, setInput] = useState('');
+  const {models, loading: modelsLoading} = useEchoModels();
 
   const handleSendMessage = () => {
     if (!input.trim() || disabled || isGenerating || isFetchingContext) return;
@@ -36,18 +38,32 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, 
     <div className="border-t border-gray-700 p-4 flex-shrink-0">
       <div className="flex items-center mb-2 space-x-4">
         <select
-          value={`${providerModel.provider}/${providerModel.model}`}
-          onChange={(e) => {
-            const [provider, model] = e.target.value.split('/');
-            setProviderModel({ provider: provider as 'openai' | 'anthropic' | 'google', model });
-          }}
+          value={providerModel ? `${providerModel.provider}/${providerModel.model_id}` : ''}
+            onChange={(e) => {
+              if (e.target.value && models) {
+                const selectedModel = models.find(m => `${m.provider}/${m.model_id}` === e.target.value);
+                if (selectedModel) {
+                  setProviderModel(selectedModel);
+                }
+              }
+            }}
           className="bg-gray-700 text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isGenerating || isFetchingContext}
+          disabled={isGenerating || isFetchingContext || modelsLoading}
         >
-          <option value="openai/gpt-4">OpenAI GPT-4</option>
-          <option value="openai/gpt-3.5-turbo">OpenAI GPT-3.5</option>
-          <option value="anthropic/claude-2">Anthropic Claude 2</option>
-          <option value="google/gemini-pro">Google Gemini Pro</option>
+          {modelsLoading ? (
+            <option value="">Loading models...</option>
+          ) : models && models.length > 0 ? (
+            models.map((modelItem) => (
+              <option 
+                key={`${modelItem.provider}/${modelItem.model_id}`} 
+                value={`${modelItem.provider}/${modelItem.model_id}`}
+              >
+                {modelItem.provider.toUpperCase()} - {modelItem.model_id}
+              </option>
+            ))
+          ) : (
+            <option value="">No models available</option>
+          )}
         </select>
         {(isGenerating || isFetchingContext) && (
           <span className="text-gray-400 text-sm">

@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
+import { useEchoModels } from '@/hooks/useEchoModels';
 import { generateText } from 'ai';
 import { MessageList } from '@/components/chat/MessageList';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { getCurrentTabContent, formatTabContentForPrompt } from '@/lib/tabContent';
+import { type SupportedModel } from '@merit-systems/echo-typescript-sdk';
 
 export interface Message {
   id: string;
@@ -12,27 +14,29 @@ export interface Message {
   timestamp: Date;
 }
 
-export interface ProviderModel {
-    provider: 'openai' | 'anthropic' | 'google';
-    model: string;
-}
-
 export const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingContext, setIsFetchingContext] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [providerModel, setProviderModel] = useState<ProviderModel>({ provider: 'openai', model: 'gpt-4' });
-
-  const { openai } = useEchoModelProviders();
+  const [providerModel, setProviderModel] = useState<SupportedModel>();
+  const { openai, anthropic, google } = useEchoModelProviders();
+  const { models } = useEchoModels();
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Initialize providerModel with the first available model
+  useEffect(() => {
+    if (models && models.length > 0 && !providerModel) {
+      setProviderModel(models[0]);
+    }
+  }, [models, providerModel]);
+
   const handleSendMessage = async (text: string) => {
-    if (!openai || !text.trim() || isGenerating) return;
+    if (!providerModel || !text.trim() || isGenerating) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -67,8 +71,28 @@ export const ChatWindow: React.FC = () => {
         };
       });
 
+      // Get the appropriate provider client based on the selected provider
+      const getProviderClient = () => {
+        switch (providerModel.provider) {
+          case 'openai':
+            return openai;
+          case 'anthropic':
+            return anthropic;
+          case 'gemini':
+            return google;
+          default:
+            return openai;
+        }
+      };
+
+      const providerClient = getProviderClient();
+      console.log('providerClient', providerClient);
+      if (!providerClient) {
+        throw new Error(`Provider ${providerModel.provider} not available`);
+      }
+
       const response = await generateText({
-        model: await openai('gpt-4'),
+        model: await providerClient(providerModel.model_id),
         messages: conversationHistory,
       });
 
@@ -104,7 +128,7 @@ export const ChatWindow: React.FC = () => {
       />
       <ChatInput 
         onSend={handleSendMessage}
-        disabled={!openai}
+        disabled={!providerModel}
         providerModel={providerModel}
         setProviderModel={setProviderModel}
         isGenerating={isGenerating}
