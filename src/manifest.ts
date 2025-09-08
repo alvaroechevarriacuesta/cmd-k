@@ -4,6 +4,7 @@ export default defineManifest({
     manifest_version: 3,
     name: 'Web Cmd+K',
     version: '1.0',
+    key: 'kmiigdmbhkjgaibohkjbnjllcmpbhphc',
     description: 'Navigate the web with ease',
     side_panel: {
         default_path: 'index.html'
