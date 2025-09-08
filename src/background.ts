@@ -117,14 +117,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         case 'CHECK_AUTH':
             chrome.storage.local.get([
                 'echo_user',
-                'echo_access_token',
-                'echo_access_token_expires_at'
+                'echo_refresh_token',
+                'echo_refresh_token_expires_at'
             ], (result) => {
                 const now = Date.now();
                 const isAuthenticated = result.echo_user && 
-                    result.echo_access_token && 
-                    result.echo_access_token_expires_at &&
-                    now < result.echo_access_token_expires_at;
+                    (result.echo_refresh_token &&
+                    result.echo_refresh_token_expires_at &&
+                    now < result.echo_refresh_token_expires_at);
                 
                 sendResponse({ 
                     isAuthenticated,
