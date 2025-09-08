@@ -12,11 +12,17 @@ export interface Message {
   timestamp: Date;
 }
 
+export interface ProviderModel {
+    provider: 'openai' | 'anthropic' | 'google';
+    model: string;
+}
+
 export const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingContext, setIsFetchingContext] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [providerModel, setProviderModel] = useState<ProviderModel>({ provider: 'openai', model: 'gpt-4' });
 
   const { openai } = useEchoModelProviders();
 
@@ -99,6 +105,8 @@ export const ChatWindow: React.FC = () => {
       <ChatInput 
         onSend={handleSendMessage}
         disabled={!openai}
+        providerModel={providerModel}
+        setProviderModel={setProviderModel}
         isGenerating={isGenerating}
         isFetchingContext={isFetchingContext}
       />

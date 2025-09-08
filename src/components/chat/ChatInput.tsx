@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
+import type { ProviderModel } from './ChatWindow';
 
 interface ChatInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
   isGenerating?: boolean;
   isFetchingContext?: boolean;
+  providerModel: ProviderModel;
+  setProviderModel: (providerModel: ProviderModel) => void;
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, isGenerating = false, isFetchingContext = false }) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, isGenerating = false, isFetchingContext = false, providerModel, setProviderModel }) => {
   const [input, setInput] = useState('');
 
   const handleSendMessage = () => {
@@ -31,6 +34,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, 
 
   return (
     <div className="border-t border-gray-700 p-4 flex-shrink-0">
+      <div className="flex items-center mb-2 space-x-4">
+        <select
+          value={`${providerModel.provider}/${providerModel.model}`}
+          onChange={(e) => {
+            const [provider, model] = e.target.value.split('/');
+            setProviderModel({ provider: provider as 'openai' | 'anthropic' | 'google', model });
+          }}
+          className="bg-gray-700 text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={isGenerating || isFetchingContext}
+        >
+          <option value="openai/gpt-4">OpenAI GPT-4</option>
+          <option value="openai/gpt-3.5-turbo">OpenAI GPT-3.5</option>
+          <option value="anthropic/claude-2">Anthropic Claude 2</option>
+          <option value="google/gemini-pro">Google Gemini Pro</option>
+        </select>
+        {(isGenerating || isFetchingContext) && (
+          <span className="text-gray-400 text-sm">
+            {isFetchingContext ? "Reading context..." : "Generating response..."}
+          </span>
+        )}
+      </div>
       <div className="flex space-x-2">
         <textarea
           value={input}
