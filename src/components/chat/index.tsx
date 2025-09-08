@@ -9,7 +9,7 @@ export const MainChat: React.FC = () => {
   } = useEcho();
 
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className={`flex h-full w-full ${!isAuthenticated ? 'items-center justify-center' : ''}`}>
       {isAuthenticated ? <ChatWindow /> : <WelcomePage />}
     </div>
   );

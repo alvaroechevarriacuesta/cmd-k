@@ -6,14 +6,14 @@ import { Navbar } from '@/components/ui/navbar'
 function App() {
 
   return (
-    <div className="flex flex-col h-screen w-screen">
-    <div className="flex h-0 flex-1 flex-col overflow-hidden">
+    <div className="flex flex-col h-screen w-screen overflow-hidden">
       <EchoProvider>
         <Navbar />
-        <MainChat />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <MainChat />
+        </div>
       </EchoProvider>
     </div>
-  </div>
   )
 }
 
