@@ -120,7 +120,7 @@ export const ChatWindow: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-0 w-full flex-col h-full">
+    <div className="flex flex-col h-full w-full overflow-hidden">
       <MessageList 
         messages={messages}
         isGenerating={isGenerating || isFetchingContext}

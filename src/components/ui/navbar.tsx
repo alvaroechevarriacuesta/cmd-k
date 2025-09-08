@@ -19,7 +19,7 @@ export function Navbar() {
           {isAuthenticated && (
             <header
               className={cn(
-                "px-2 md:px-4 pt-2 border-b flex flex-col gap-1",
+                "px-2 md:px-4 pt-2 flex flex-col gap-1",
                 "pb-2"
               )}
             >
