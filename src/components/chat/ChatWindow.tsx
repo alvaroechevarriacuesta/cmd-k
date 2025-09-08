@@ -93,6 +93,7 @@ export const ChatWindow: React.FC = () => {
 
       const response = await generateText({
         model: await providerClient(providerModel.model_id),
+        system: 'You are a helpful assistant that can answer questions and help with tasks. Please keep the answers relatively concise, and respond in properly formatted markdown.You should try to use bullet points if necessary.',
         messages: conversationHistory,
       });
 

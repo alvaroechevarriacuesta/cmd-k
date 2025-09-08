@@ -1,4 +1,6 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Message } from './ChatWindow';
 
 interface MessageListProps {
@@ -30,13 +32,17 @@ export const MessageList: React.FC<MessageListProps> = ({
             <div
               className={`max-w-[95%] rounded-lg px-4 py-2 ${
                 message.isUser
-                  ? 'text-black'
+                  ? 'bg-gray-200 text-black'
                   : message.text.startsWith('Error:')
                   ? 'text-red-500'
                   : 'text-black'
               }`}
             >
-              <p className="text-sm text-justify">{message.text}</p>
+              <div className="text-sm markdown-content">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.text}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         ))
