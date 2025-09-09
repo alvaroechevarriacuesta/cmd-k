@@ -44,7 +44,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, 
             onKeyPress={handleKeyPress}
             onInput={handleTextareaInput}
             placeholder={isFetchingContext ? "Reading page content..." : isGenerating ? "AI is responding..." : "Send a message..."}
-            disabled={disabled || isFetchingContext}
+            disabled={disabled}
             className="flex-1 border border-gray-300 text-black rounded-lg px-4 py-2 focus:outline-none resize-none min-h-[40px] max-h-[120px] overflow-y-auto"
             rows={1}
             style={{

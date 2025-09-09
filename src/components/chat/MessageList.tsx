@@ -42,12 +42,15 @@ export const MessageList: React.FC<MessageListProps> = ({
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.text}
                 </ReactMarkdown>
+                {message.isStreaming && (
+                  <span className="inline-block w-2 h-4 bg-gray-400 ml-1 animate-pulse"></span>
+                )}
               </div>
             </div>
           </div>
         ))
       )}
-      {isGenerating && (
+      {isGenerating && !messages.some(msg => msg.isStreaming) && (
         <div className="flex justify-start">
           <div className="text-black rounded-lg px-4 py-2">
             <div className="flex space-x-1">

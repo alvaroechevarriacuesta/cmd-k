@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
 import { useEchoModels } from '@/hooks/useEchoModels';
-import { generateText } from 'ai';
+import { streamText } from 'ai';
 import { MessageList } from '@/components/chat/MessageList';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { getCurrentTabContent, formatTabContentForPrompt } from '@/lib/tabContent';
@@ -12,6 +12,7 @@ export interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
 export const ChatWindow: React.FC = () => {
@@ -91,22 +92,54 @@ export const ChatWindow: React.FC = () => {
         throw new Error(`Provider ${providerModel.provider} not available`);
       }
 
-      const response = await generateText({
+      const response = await streamText({
         model: await providerClient(providerModel.model_id),
         system: 'You are a helpful assistant that can answer questions and help with tasks. Please keep the answers relatively concise, and respond in properly formatted markdown.You should try to use bullet points if necessary.',
         messages: conversationHistory,
       });
 
+      // Create initial assistant message
+      const assistantMessageId = (Date.now() + 1).toString();
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response.text,
+        id: assistantMessageId,
+        text: '',
         isUser: false,
         timestamp: new Date(),
+        isStreaming: true,
       };
 
+      // Add the initial empty assistant message
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Stream the response
+      for await (const delta of response.textStream) {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, text: msg.text + delta }
+              : msg
+          )
+        );
+      }
+
+      // Mark streaming as complete
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, isStreaming: false }
+            : msg
+        )
+      );
     } catch (error) {
       console.error('Error generating response:', error);
+      
+      // If there's a streaming message that was interrupted, mark it as completed
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.isStreaming ? { ...msg, isStreaming: false } : msg
+        )
+      );
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: 'Error: Failed to generate response. Please try again.',
