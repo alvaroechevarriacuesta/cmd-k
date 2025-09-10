@@ -15,12 +15,19 @@ export interface Message {
   isStreaming?: boolean;
 }
 
+const DEFAULT_PROVIDER_MODEL: SupportedModel = {
+  provider: 'openai', 
+  model_id: 'gpt-4o-mini',
+  input_cost_per_token: 0.00015,
+  output_cost_per_token: 0.0006
+};
+
 export const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingContext, setIsFetchingContext] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [providerModel, setProviderModel] = useState<SupportedModel>();
+  const [providerModel, setProviderModel] = useState<SupportedModel>(DEFAULT_PROVIDER_MODEL);
   const { openai, anthropic, google } = useEchoModelProviders();
   const { models } = useEchoModels();
 
