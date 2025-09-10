@@ -10,15 +10,15 @@ export interface TabContent {
 export async function getCurrentTabContent(): Promise<TabContent> {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage(
-      { action: 'GET_TAB_CONTENT' },
+      { action: "GET_TAB_CONTENT" },
       (response: TabContent) => {
-        console.log('Tab content fetched:', {
+        console.log("Tab content fetched:", {
           url: response.url,
           title: response.title,
-          contentLength: response.content?.length || 0
+          contentLength: response.content?.length || 0,
         });
         resolve(response);
-      }
+      },
     );
   });
 }
@@ -29,7 +29,7 @@ export async function getCurrentTabContent(): Promise<TabContent> {
  */
 export function formatTabContentForPrompt(tabContent: TabContent): string {
   if (!tabContent.content) {
-    return '';
+    return "";
   }
 
   return `

@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 // import { useEchoModels } from '@/hooks/useEchoModels';
-import { type SupportedModel } from '@merit-systems/echo-typescript-sdk';
-import { ContextInfo } from './ContextInfo';
+import { type SupportedModel } from "@merit-systems/echo-typescript-sdk";
+import { ContextInfo } from "./ContextInfo";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -12,26 +12,33 @@ interface ChatInputProps {
   setProviderModel: (providerModel: SupportedModel) => void;
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, isGenerating = false, isFetchingContext = false, providerModel, setProviderModel }) => {
-  const [input, setInput] = useState('');
+export const ChatInput: React.FC<ChatInputProps> = ({
+  onSend,
+  disabled = false,
+  isGenerating = false,
+  isFetchingContext = false,
+  providerModel,
+  setProviderModel,
+}) => {
+  const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // const {models, loading: modelsLoading} = useEchoModels();
 
   const handleSendMessage = () => {
     if (!input.trim() || disabled || isGenerating || isFetchingContext) return;
     onSend(input.trim());
-    setInput('');
-    
+    setInput("");
+
     // Reset textarea height after clearing input
     setTimeout(() => {
       if (textareaRef.current) {
-        textareaRef.current.style.height = '40px';
+        textareaRef.current.style.height = "40px";
       }
     }, 0);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -39,13 +46,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, 
 
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.target as HTMLTextAreaElement;
-    target.style.height = 'auto';
-    
+    target.style.height = "auto";
+
     // If textarea is empty, reset to minimum height
-    if (target.value.trim() === '') {
-      target.style.height = '40px';
+    if (target.value.trim() === "") {
+      target.style.height = "40px";
     } else {
-      target.style.height = Math.min(target.scrollHeight, 200) + 'px';
+      target.style.height = Math.min(target.scrollHeight, 200) + "px";
     }
   };
 
@@ -66,19 +73,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, 
                 isFetchingContext
                   ? "Reading page content..."
                   : isGenerating
-                  ? "AI is responding..."
-                  : "Send a message..."
+                    ? "AI is responding..."
+                    : "Send a message..."
               }
               disabled={disabled}
               className="w-full text-black focus:outline-none resize-none bg-transparent"
               rows={1}
               style={{
-                minHeight: '40px',
-                maxHeight: '200px',
-                height: 'auto',
+                minHeight: "40px",
+                maxHeight: "200px",
+                height: "auto",
               }}
             />
-            <ContextInfo model={providerModel} setProviderModel={setProviderModel}/>
+            <ContextInfo
+              model={providerModel}
+              setProviderModel={setProviderModel}
+            />
           </div>
         </div>
       </div>

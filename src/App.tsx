@@ -1,10 +1,9 @@
-import './App.css'
-import { MainChat } from '@/components/chat'
-import { EchoProvider } from '@/contexts/echo'
-import { Navbar } from '@/components/ui/navbar'
+import "./App.css";
+import { MainChat } from "@/components/chat";
+import { EchoProvider } from "@/contexts/echo";
+import { Navbar } from "@/components/ui/navbar";
 
 function App() {
-
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       <EchoProvider>
@@ -14,7 +13,7 @@ function App() {
         </div>
       </EchoProvider>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

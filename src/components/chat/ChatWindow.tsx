@@ -1,10 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
-import { streamText } from 'ai';
-import { MessageList } from '@/components/chat/MessageList';
-import { ChatInput } from '@/components/chat/ChatInput';
-import { getCurrentTabContent, formatTabContentForPrompt } from '@/lib/tabContent';
-import { type SupportedModel } from '@merit-systems/echo-typescript-sdk';
+import React, { useState, useRef, useEffect } from "react";
+import { useEchoModelProviders } from "@/hooks/useEchoModelProviders";
+import { streamText } from "ai";
+import { MessageList } from "@/components/chat/MessageList";
+import { ChatInput } from "@/components/chat/ChatInput";
+import {
+  getCurrentTabContent,
+  formatTabContentForPrompt,
+} from "@/lib/tabContent";
+import { type SupportedModel } from "@merit-systems/echo-typescript-sdk";
 
 export interface Message {
   id: string;
@@ -15,10 +18,10 @@ export interface Message {
 }
 
 const DEFAULT_PROVIDER_MODEL: SupportedModel = {
-  provider: 'openai', 
-  model_id: 'gpt-4o-mini',
+  provider: "openai",
+  model_id: "gpt-4o-mini",
   input_cost_per_token: 0.00015,
-  output_cost_per_token: 0.0006
+  output_cost_per_token: 0.0006,
 };
 
 export const ChatWindow: React.FC = () => {
@@ -26,12 +29,14 @@ export const ChatWindow: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingContext, setIsFetchingContext] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [providerModel, setProviderModel] = useState<SupportedModel>(DEFAULT_PROVIDER_MODEL);
+  const [providerModel, setProviderModel] = useState<SupportedModel>(
+    DEFAULT_PROVIDER_MODEL,
+  );
   const { openai, anthropic, google } = useEchoModelProviders();
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSendMessage = async (text: string) => {
@@ -54,18 +59,22 @@ export const ChatWindow: React.FC = () => {
       const tabContent = await getCurrentTabContent();
       setIsFetchingContext(false);
       setIsGenerating(true);
-      
+
       // Convert conversation history to AI SDK format
       const conversationHistory = updatedMessages.map((msg, index) => {
         let content = msg.text;
-        
+
         // Add tab content as context to the latest user message
-        if (msg.isUser && index === updatedMessages.length - 1 && tabContent.content) {
+        if (
+          msg.isUser &&
+          index === updatedMessages.length - 1 &&
+          tabContent.content
+        ) {
           content = `${msg.text}${formatTabContentForPrompt(tabContent)}`;
         }
-        
+
         return {
-          role: (msg.isUser ? 'user' : 'assistant') as 'user' | 'assistant',
+          role: (msg.isUser ? "user" : "assistant") as "user" | "assistant",
           content,
         };
       });
@@ -73,11 +82,11 @@ export const ChatWindow: React.FC = () => {
       // Get the appropriate provider client based on the selected provider
       const getProviderClient = () => {
         switch (providerModel.provider) {
-          case 'openai':
+          case "openai":
             return openai;
-          case 'anthropic':
+          case "anthropic":
             return anthropic;
-          case 'gemini':
+          case "gemini":
             return google;
           default:
             return openai;
@@ -85,14 +94,15 @@ export const ChatWindow: React.FC = () => {
       };
 
       const providerClient = getProviderClient();
-      console.log('providerClient', providerClient);
+      console.log("providerClient", providerClient);
       if (!providerClient) {
         throw new Error(`Provider ${providerModel.provider} not available`);
       }
 
       const response = await streamText({
         model: await providerClient(providerModel.model_id),
-        system: 'You are a helpful assistant that can answer questions and help with tasks. Please keep the answers relatively concise, and respond in properly formatted markdown.You should try to use bullet points if necessary.',
+        system:
+          "You are a helpful assistant that can answer questions and help with tasks. Please keep the answers relatively concise, and respond in properly formatted markdown.You should try to use bullet points if necessary.",
         messages: conversationHistory,
       });
 
@@ -100,51 +110,49 @@ export const ChatWindow: React.FC = () => {
       const assistantMessageId = (Date.now() + 1).toString();
       const assistantMessage: Message = {
         id: assistantMessageId,
-        text: '',
+        text: "",
         isUser: false,
         timestamp: new Date(),
         isStreaming: true,
       };
 
       // Add the initial empty assistant message
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
 
       // Stream the response
       for await (const delta of response.textStream) {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === assistantMessageId 
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId
               ? { ...msg, text: msg.text + delta }
-              : msg
-          )
+              : msg,
+          ),
         );
       }
 
       // Mark streaming as complete
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === assistantMessageId 
-            ? { ...msg, isStreaming: false }
-            : msg
-        )
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId ? { ...msg, isStreaming: false } : msg,
+        ),
       );
     } catch (error) {
-      console.error('Error generating response:', error);
-      
+      console.error("Error generating response:", error);
+
       // If there's a streaming message that was interrupted, mark it as completed
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.isStreaming ? { ...msg, isStreaming: false } : msg
-        )
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.isStreaming ? { ...msg, isStreaming: false } : msg,
+        ),
       );
-      
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Error: Failed to generate response. Please try again.',
+        text: "Error: Failed to generate response. Please try again.",
         isUser: false,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsFetchingContext(false);
       setIsGenerating(false);
@@ -153,12 +161,12 @@ export const ChatWindow: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
-      <MessageList 
+      <MessageList
         messages={messages}
         isGenerating={isGenerating || isFetchingContext}
         messagesEndRef={messagesEndRef}
       />
-      <ChatInput 
+      <ChatInput
         onSend={handleSendMessage}
         disabled={!providerModel}
         providerModel={providerModel}

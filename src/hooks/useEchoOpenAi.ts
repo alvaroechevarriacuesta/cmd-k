@@ -1,9 +1,8 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { useEcho } from '@/hooks/useEcho';
+import { useState, useEffect, useRef } from "react";
+import { useEcho } from "@/hooks/useEcho";
 
 // Type-only import to avoid runtime dependency
-type OpenAI = import('openai').OpenAI;
+type OpenAI = import("openai").OpenAI;
 
 interface UseEchoOpenAIOptions {
   baseURL?: string;
@@ -18,9 +17,9 @@ interface UseEchoOpenAIResult {
 }
 
 export function useEchoOpenAI(
-  options: UseEchoOpenAIOptions = {}
+  options: UseEchoOpenAIOptions = {},
 ): UseEchoOpenAIResult {
-  const { baseURL = 'https://echo.router.merit.systems', enabled = true } =
+  const { baseURL = "https://echo.router.merit.systems", enabled = true } =
     options;
 
   const { token, isAuthenticated } = useEcho();
@@ -59,7 +58,7 @@ export function useEchoOpenAI(
         }
 
         // Dynamic import to only load OpenAI when needed
-        const { default: OpenAI } = await import('openai');
+        const { default: OpenAI } = await import("openai");
 
         // Check again after async import
         if (abortController.signal.aborted) {
@@ -80,22 +79,22 @@ export function useEchoOpenAI(
         // Only handle error if not aborted
         if (!abortController.signal.aborted) {
           const errorMessage =
-            err instanceof Error ? err.message : 'Failed to load OpenAI';
+            err instanceof Error ? err.message : "Failed to load OpenAI";
 
           // Check if it's a module not found error
           if (
-            errorMessage.includes('Cannot resolve module') ||
-            errorMessage.includes('Module not found') ||
-            errorMessage.includes('openai')
+            errorMessage.includes("Cannot resolve module") ||
+            errorMessage.includes("Module not found") ||
+            errorMessage.includes("openai")
           ) {
             setError(
-              'OpenAI package not found. Please install it with: pnpm add openai'
+              "OpenAI package not found. Please install it with: pnpm add openai",
             );
           } else {
             setError(`Failed to initialize OpenAI client: ${errorMessage}`);
           }
 
-          console.error('Error loading OpenAI:', err);
+          console.error("Error loading OpenAI:", err);
           setOpenai(undefined);
         }
       } finally {
