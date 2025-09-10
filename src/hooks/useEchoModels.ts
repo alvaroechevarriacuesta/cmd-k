@@ -2,7 +2,7 @@ import { EchoClient, type SupportedModel } from '@merit-systems/echo-typescript-
 import { useEcho } from './useEcho';
 import { useState, useEffect } from 'react';
 
-export function useEchoModels() {
+export function useEchoModels(provider?: string) {
     const { echoClient } = useEcho();
     const [models, setModels] = useState<SupportedModel[]>();
     const [loading, setLoading] = useState(false);
@@ -14,9 +14,12 @@ export function useEchoModels() {
         }
         const getModels = async (echoClient: EchoClient) => {
             try {
-            setLoading(true);
-                const models = await echoClient.models.listSupportedChatModels();
-                setModels(models);
+                setLoading(true);
+                const allModels = await echoClient.models.listSupportedChatModels();
+                const filteredModels = provider 
+                    ? allModels.filter(model => model.provider === provider)
+                    : allModels;
+                setModels(filteredModels);
             } catch (err) {
                 setError(err as Error);
             } finally {
@@ -26,7 +29,7 @@ export function useEchoModels() {
 
         getModels(echoClient);
 
-    }, [echoClient]);
+    }, [echoClient, provider]);
 
     return { models, loading, error };
 }
