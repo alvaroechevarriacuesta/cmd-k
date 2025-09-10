@@ -238,11 +238,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 .replace(/\n\s*\n/g, "\n") // Remove empty lines
                 .trim();
 
-              // Limit content length to avoid token limits (approximately 8000 characters)
-              if (text.length > 8000) {
-                text = text.substring(0, 8000) + "...";
-              }
-
               return {
                 content: text,
                 url: window.location.href,
