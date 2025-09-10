@@ -84,9 +84,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 height: "auto",
               }}
             />
-            <ContextInfo
-              model={providerModel}
-            />
+            <ContextInfo model={providerModel} />
           </div>
         </div>
       </div>

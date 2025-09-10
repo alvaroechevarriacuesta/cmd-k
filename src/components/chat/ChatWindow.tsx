@@ -102,7 +102,7 @@ export const ChatWindow: React.FC = () => {
       const response = await streamText({
         model: await providerClient(providerModel.model_id),
         system:
-          "You are a helpful assistant that can answer questions and help with tasks. Please keep the answers relatively concise, and respond in properly formatted markdown.You should try to use bullet points if necessary.",
+          "You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with ```",
         messages: conversationHistory,
       });
 

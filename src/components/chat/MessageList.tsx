@@ -42,7 +42,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     : "text-black"
               }`}
             >
-              <div className="text-sm markdown-content">
+              <div className="text-xs markdown-content">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.text}
                 </ReactMarkdown>
