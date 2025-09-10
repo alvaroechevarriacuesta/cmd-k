@@ -55,7 +55,7 @@ const ProviderInfo: React.FC<SupportedModel> = ({ provider, model_id }) => {
           <span className="truncate">{model_id}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start">
+      <DropdownMenuContent side="top" align="start" className="bg-white">
         {providers.map((provider) => (
           <DropdownMenuItem key={provider}>
             <img
@@ -74,7 +74,7 @@ const ProviderInfo: React.FC<SupportedModel> = ({ provider, model_id }) => {
               alt={`${provider} icon`}
               className="w-3 h-3 flex-shrink-0"
             />
-            {provider}
+            {provider.charAt(0).toUpperCase() + provider.slice(1)}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
