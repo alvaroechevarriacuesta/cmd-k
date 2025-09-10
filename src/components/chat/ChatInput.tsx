@@ -12,7 +12,7 @@ interface ChatInputProps {
   setProviderModel: (providerModel: SupportedModel) => void;
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, isGenerating = false, isFetchingContext = false, providerModel }) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, isGenerating = false, isFetchingContext = false, providerModel, setProviderModel }) => {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // const {models, loading: modelsLoading} = useEchoModels();
@@ -78,7 +78,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled = false, 
                 height: 'auto',
               }}
             />
-            <ContextInfo model={providerModel}/>
+            <ContextInfo model={providerModel} setProviderModel={setProviderModel}/>
           </div>
         </div>
       </div>

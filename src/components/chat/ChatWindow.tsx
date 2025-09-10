@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useEchoModelProviders } from '@/hooks/useEchoModelProviders';
-import { useEchoModels } from '@/hooks/useEchoModels';
 import { streamText } from 'ai';
 import { MessageList } from '@/components/chat/MessageList';
 import { ChatInput } from '@/components/chat/ChatInput';
@@ -29,19 +28,11 @@ export const ChatWindow: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [providerModel, setProviderModel] = useState<SupportedModel>(DEFAULT_PROVIDER_MODEL);
   const { openai, anthropic, google } = useEchoModelProviders();
-  const { models } = useEchoModels();
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Initialize providerModel with the first available model
-  useEffect(() => {
-    if (models && models.length > 0 && !providerModel) {
-      setProviderModel(models[0]);
-    }
-  }, [models, providerModel]);
 
   const handleSendMessage = async (text: string) => {
     if (!providerModel || !text.trim() || isGenerating) return;
