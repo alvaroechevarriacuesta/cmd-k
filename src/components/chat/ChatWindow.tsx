@@ -81,7 +81,7 @@ export const ChatWindow: React.FC = () => {
 
       // Get the appropriate provider client based on the selected provider
       const getProviderClient = () => {
-        switch (providerModel.provider) {
+        switch (providerModel.provider.toLowerCase()) {
           case "openai":
             return openai;
           case "anthropic":

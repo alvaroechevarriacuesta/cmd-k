@@ -12,24 +12,33 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 
-export const ContextInfo: React.FC<{ model: SupportedModel }> = ({ model }) => {
+interface ContextInfoProps {
+  model: SupportedModel;
+  setProviderModel: (model: SupportedModel) => void;
+}
+
+export const ContextInfo: React.FC<ContextInfoProps> = ({ model, setProviderModel }) => {
   return (
     <div className="h-[40px] mt-2 rounded-md text-white flex items-center justify-start text-sm">
-      <ProviderInfo {...model} />
+      <ProviderInfo {...model} setProviderModel={setProviderModel} />
     </div>
   );
 };
 
-const ProviderInfo: React.FC<SupportedModel> = ({ provider, model_id }) => {
+interface ProviderInfoProps extends SupportedModel {
+  setProviderModel: (model: SupportedModel) => void;
+}
+
+const ProviderInfo: React.FC<ProviderInfoProps> = ({ provider, model_id, setProviderModel }) => {
   const { models } = useEchoModels();
-  const providers = ["openai", "anthropic", "google", "openrouter"];
+  const providers = ["openai", "anthropic", "gemini", "openrouter"];
   const getProviderIcon = () => {
     switch (provider.toLowerCase()) {
       case "openai":
         return "/openai.png";
       case "anthropic":
         return "/anthropic.png";
-      case "google":
+      case "gemini":
         return "/google.png";
       default:
         return "/openrouter.png";
@@ -64,7 +73,7 @@ const ProviderInfo: React.FC<SupportedModel> = ({ provider, model_id }) => {
                       return "/openai.png";
                     case "anthropic":
                       return "/anthropic.png";
-                    case "google":
+                    case "gemini":
                       return "/google.png";
                     default:
                       return "/openrouter.png";
@@ -84,6 +93,7 @@ const ProviderInfo: React.FC<SupportedModel> = ({ provider, model_id }) => {
                   <DropdownMenuItem
                     key={m.model_id}
                     className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => setProviderModel(m)}
                   >
                     {m.model_id}
                   </DropdownMenuItem>

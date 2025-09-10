@@ -18,6 +18,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isGenerating = false,
   isFetchingContext = false,
   providerModel,
+  setProviderModel,
 }) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -84,7 +85,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 height: "auto",
               }}
             />
-            <ContextInfo model={providerModel} />
+            <ContextInfo model={providerModel} setProviderModel={setProviderModel} />
           </div>
         </div>
       </div>
