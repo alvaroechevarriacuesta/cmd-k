@@ -4,8 +4,8 @@ import { streamText } from "ai";
 import { MessageList } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import {
-  getCurrentTabContent,
-  formatTabContentForPrompt,
+  getContextFromTabs,
+  formatMultipleTabContentsForSystemPrompt,
 } from "@/lib/tabContent";
 import { type SupportedModel } from "@merit-systems/echo-typescript-sdk";
 
@@ -15,6 +15,12 @@ export interface Message {
   isUser: boolean;
   timestamp: Date;
   isStreaming?: boolean;
+}
+
+export interface Context {
+  tabId: number;
+  url: string;
+  title: string;
 }
 
 const DEFAULT_PROVIDER_MODEL: SupportedModel = {
@@ -28,11 +34,54 @@ export const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingContext, setIsFetchingContext] = useState(false);
+  const [contexts, setContexts] = useState<Context[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [providerModel, setProviderModel] = useState<SupportedModel>(
     DEFAULT_PROVIDER_MODEL,
   );
   const { openai, anthropic, google } = useEchoModelProviders();
+
+  // Connect to the side panel port and listen for context updates
+  useEffect(() => {
+    const port = chrome.runtime.connect({ name: "sidePanelPort" });
+
+    port.onMessage.addListener((message) => {
+      if (message.action === "ADD_CONTEXT") {
+        const incomingContext = message.context;
+
+        setContexts((prev) => {
+          // Check if a context with the same tabId already exists
+          const existingTabIndex = prev.findIndex(
+            (context) => context.tabId === incomingContext.tabId,
+          );
+
+          if (existingTabIndex !== -1) {
+            // Tab ID already exists - only update if URL is different
+            const existingContext = prev[existingTabIndex];
+            if (existingContext.url !== incomingContext.url) {
+              // URL is different, update the context with new title and URL
+              const newContexts = [...prev];
+              newContexts[existingTabIndex] = incomingContext;
+              return newContexts;
+            }
+            // Same tab ID and same URL, no update needed
+            return prev;
+          }
+
+          // New tab ID, add it to the list
+          return [...prev, incomingContext];
+        });
+      }
+    });
+
+    port.onDisconnect.addListener(() => {
+      console.log("Port disconnected from ChatWindow");
+    });
+
+    return () => {
+      port.disconnect();
+    };
+  }, []);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -55,29 +104,16 @@ export const ChatWindow: React.FC = () => {
     setIsFetchingContext(true);
 
     try {
-      // Fetch current tab content
-      const tabContent = await getCurrentTabContent();
+      // Fetch current tab content from all contexts
+      const tabContents = await getContextFromTabs(contexts);
       setIsFetchingContext(false);
       setIsGenerating(true);
 
-      // Convert conversation history to AI SDK format
-      const conversationHistory = updatedMessages.map((msg, index) => {
-        let content = msg.text;
-
-        // Add tab content as context to the latest user message
-        if (
-          msg.isUser &&
-          index === updatedMessages.length - 1 &&
-          tabContent.content
-        ) {
-          content = `${msg.text}${formatTabContentForPrompt(tabContent)}`;
-        }
-
-        return {
-          role: (msg.isUser ? "user" : "assistant") as "user" | "assistant",
-          content,
-        };
-      });
+      // Convert conversation history to AI SDK format without adding tab content to messages
+      const conversationHistory = updatedMessages.map((msg) => ({
+        role: (msg.isUser ? "user" : "assistant") as "user" | "assistant",
+        content: msg.text,
+      }));
 
       // Get the appropriate provider client based on the selected provider
       const getProviderClient = () => {
@@ -99,10 +135,22 @@ export const ChatWindow: React.FC = () => {
         throw new Error(`Provider ${providerModel.provider} not available`);
       }
 
+      // Create system prompt with optional tab content context
+      const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\``;
+      const tabContextPrompt =
+        formatMultipleTabContentsForSystemPrompt(tabContents);
+      const systemPrompt = baseSystemPrompt + tabContextPrompt;
+
+      console.log("=== SYSTEM PROMPT DEBUG ===");
+      console.log("Base system prompt:", baseSystemPrompt);
+      console.log("Tab contexts count:", tabContents.length);
+      console.log("Tab context prompt:", tabContextPrompt);
+      console.log("Full system prompt:", systemPrompt);
+      console.log("=== END SYSTEM PROMPT DEBUG ===");
+
       const response = await streamText({
         model: await providerClient(providerModel.model_id),
-        system:
-          "You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with ```",
+        system: systemPrompt,
         messages: conversationHistory,
       });
 
@@ -170,6 +218,8 @@ export const ChatWindow: React.FC = () => {
         onSend={handleSendMessage}
         disabled={!providerModel}
         providerModel={providerModel}
+        contexts={contexts}
+        setContexts={setContexts}
         setProviderModel={setProviderModel}
         isGenerating={isGenerating}
         isFetchingContext={isFetchingContext}

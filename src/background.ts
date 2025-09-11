@@ -1,5 +1,7 @@
 import { authenticate, refreshTokens } from "@/lib/echoAuth";
 
+let sidePanelPort: chrome.runtime.Port | null = null;
+
 chrome.runtime.onInstalled.addListener(async () => {
   console.log("Web Cmd+K is installed");
 
@@ -24,7 +26,7 @@ chrome.commands.onCommand.addListener((command) => {
       if (tabId) {
         console.log("Opening side panel on tab:", tabId);
         chrome.sidePanel.open({ tabId });
-        chrome.runtime.sendMessage({ action: "FOCUS_CHAT_INPUT" });
+        sendContextToSidePanel(tabs[0]);
       } else {
         console.warn("No active tab found");
       }
@@ -196,9 +198,21 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }
 
         try {
+          // Get tab information using chrome.tabs.get()
+          const tab = await chrome.tabs.get(activeTab.id);
+
+          if (!tab || !tab.id) {
+            sendResponse({
+              content: null,
+              url: activeTab.url,
+              title: activeTab.title,
+            });
+            return;
+          }
+
           // Inject content script to extract page content
           const results = await chrome.scripting.executeScript({
-            target: { tabId: activeTab.id },
+            target: { tabId: tab.id },
             func: () => {
               // Get main content, preferring article, main, or body
               const contentSelectors = [
@@ -253,8 +267,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const tabData = results[0]?.result;
           sendResponse({
             content: tabData?.content || null,
-            url: tabData?.url || activeTab.url,
-            title: tabData?.title || activeTab.title,
+            url: tabData?.url || tab.url || activeTab.url,
+            title: tabData?.title || tab.title || activeTab.title,
           });
         } catch (error) {
           console.error("Error getting tab content:", error);
@@ -266,6 +280,159 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }
       });
       break;
+    case "GET_CONTEXT_FROM_TABS": {
+      const contexts = message.contexts;
+      console.log("Fetching content from provided tabs:", contexts);
+
+      if (!contexts || contexts.length === 0) {
+        sendResponse([]);
+        return;
+      }
+
+      const getAllTabsContent = async () => {
+        const tabContentPromises = contexts.map(
+          async (context: { tabId: number; url: string; title: string }) => {
+            try {
+              // Get tab information using chrome.tabs.get()
+              const tab = await chrome.tabs.get(context.tabId);
+
+              if (!tab || !tab.id) {
+                return {
+                  content: null,
+                  url: context.url,
+                  title: context.title,
+                };
+              }
+
+              // Inject content script to extract page content
+              const results = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                  // Get main content, preferring article, main, or body
+                  const contentSelectors = [
+                    "article",
+                    "main",
+                    '[role="main"]',
+                    "body",
+                  ];
+                  let contentElement = document.body;
+
+                  for (const selector of contentSelectors) {
+                    const element = document.querySelector(
+                      selector,
+                    ) as HTMLElement;
+                    if (
+                      element &&
+                      element.textContent &&
+                      element.textContent.trim().length > 100
+                    ) {
+                      contentElement = element;
+                      break;
+                    }
+                  }
+
+                  // Clone the content element to avoid modifying the original page
+                  const clonedElement = contentElement.cloneNode(
+                    true,
+                  ) as HTMLElement;
+
+                  // Remove script tags, style tags, and other non-content elements from the CLONE
+                  const scriptsToRemove = clonedElement.querySelectorAll(
+                    "script, style, noscript, iframe, embed, object",
+                  );
+                  scriptsToRemove.forEach((el) => el.remove());
+
+                  // Extract text content and clean it up from the cloned element
+                  let text =
+                    clonedElement.innerText || clonedElement.textContent || "";
+
+                  // Clean up whitespace and normalize
+                  text = text
+                    .replace(/\s+/g, " ") // Replace multiple whitespace with single space
+                    .replace(/\n\s*\n/g, "\n") // Remove empty lines
+                    .trim();
+
+                  return {
+                    content: text,
+                    url: window.location.href,
+                    title: document.title,
+                  };
+                },
+              });
+
+              const tabData = results[0]?.result;
+              return {
+                content: tabData?.content || null,
+                url: tabData?.url || tab.url || context.url,
+                title: tabData?.title || tab.title || context.title,
+              };
+            } catch (error) {
+              console.error(
+                `Error getting content from tab ${context.tabId}:`,
+                error,
+              );
+              return {
+                content: null,
+                url: context.url,
+                title: context.title,
+              };
+            }
+          },
+        );
+
+        return Promise.all(tabContentPromises);
+      };
+
+      getAllTabsContent()
+        .then((tabContents) => {
+          console.log(
+            "Successfully fetched content from",
+            tabContents.length,
+            "tabs",
+          );
+          sendResponse(tabContents);
+        })
+        .catch((error) => {
+          console.error("Error fetching tab contents:", error);
+          sendResponse([]);
+        });
+      break;
+    }
   }
   return true; // Keep the message channel open for async responses
 });
+
+// Handle port connections from the side panel
+chrome.runtime.onConnect.addListener((port) => {
+  console.log("Port connected:", port.name);
+
+  if (port.name === "sidePanelPort") {
+    sidePanelPort = port;
+
+    port.onDisconnect.addListener(() => {
+      console.log("Side panel port disconnected");
+      sidePanelPort = null;
+    });
+
+    port.onMessage.addListener((message) => {
+      console.log("Message received from side panel:", message);
+    });
+  }
+});
+
+function sendContextToSidePanel(tab: chrome.tabs.Tab) {
+  console.log("Sending context to side panel:", tab);
+
+  if (sidePanelPort) {
+    sidePanelPort.postMessage({
+      action: "ADD_CONTEXT",
+      context: {
+        tabId: tab.id,
+        url: tab.url,
+        title: tab.title,
+      },
+    });
+  } else {
+    console.warn("Side panel port not connected");
+  }
+}
