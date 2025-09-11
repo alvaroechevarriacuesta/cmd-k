@@ -2,7 +2,7 @@ import React from "react";
 import type { SupportedModel } from "@merit-systems/echo-typescript-sdk";
 import { Button } from "@/components/ui/button";
 import { useEchoModels } from "@/hooks/useEchoModels";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +12,14 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
+import { type Context } from "./ChatWindow";
 
 interface ContextInfoProps {
   model: SupportedModel;
   setProviderModel: (model: SupportedModel) => void;
   sendMessage: () => void;
+  contexts?: Context[];
+  setContexts?: React.Dispatch<React.SetStateAction<Context[]>>;
 }
 
 interface SendButtonProps {
@@ -27,10 +30,13 @@ export const ContextInfo: React.FC<ContextInfoProps> = ({
   model,
   setProviderModel,
   sendMessage,
+  contexts,
+  setContexts,
 }) => {
   return (
-    <div className="h-[40px] mt-2 rounded-md text-white flex items-center justify-start text-sm">
+    <div className="min-h-[40px] mt-2 rounded-md text-white flex items-center justify-start text-sm">
       <ProviderInfo {...model} setProviderModel={setProviderModel} />
+      <ContextInfoList contexts={contexts} setContexts={setContexts} />
       <SendButton sendMessage={sendMessage} />
     </div>
   );
@@ -129,5 +135,89 @@ const ProviderInfo: React.FC<ProviderInfoProps> = ({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+};
+
+interface ContextInfoListProps {
+  contexts?: Context[];
+  setContexts?: React.Dispatch<React.SetStateAction<Context[]>>;
+}
+
+const ContextInfoList: React.FC<ContextInfoListProps> = ({ contexts, setContexts }) => {
+  const removeContext = (tabIdToRemove: number) => {
+    if (setContexts) {
+      setContexts((prevContexts) => 
+        prevContexts.filter((context) => context.tabId !== tabIdToRemove)
+      );
+    }
+  };
+
+  const truncateTitle = (title: string, maxLength: number = 25) => {
+    return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title;
+  };
+
+  // Only show first 4 contexts
+  const displayedContexts = contexts?.slice(0, 4) || [];
+
+  if (!displayedContexts.length) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 mx-2 flex-1 overflow-hidden">
+      {/* First row - up to 2 contexts */}
+      <div className="flex items-center gap-1 overflow-hidden">
+        {displayedContexts.slice(0, 2).map((context) => (
+          <Button
+            key={context.tabId}
+            variant="outline"
+            size="sm"
+            className="h-5 px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 flex items-center gap-1 max-w-[140px] min-w-0"
+          >
+            <span className="truncate flex-1 min-w-0">
+              {truncateTitle(context.title)}
+            </span>
+            <X
+              className="h-3 w-3 cursor-pointer hover:text-red-500 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeContext(context.tabId);
+              }}
+            />
+          </Button>
+        ))}
+        {/* Show overflow indicator on first row if there are more than 4 total */}
+        {contexts && contexts.length > 4 && (
+          <span className="text-xs text-gray-500 flex-shrink-0">
+            +{contexts.length - 4}
+          </span>
+        )}
+      </div>
+      
+      {/* Second row - contexts 3 and 4 if they exist */}
+      {displayedContexts.length > 2 && (
+        <div className="flex items-center gap-1 overflow-hidden">
+          {displayedContexts.slice(2, 4).map((context) => (
+            <Button
+              key={context.tabId}
+              variant="outline"
+              size="sm"
+              className="h-5 px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700 flex items-center gap-1 max-w-[140px] min-w-0"
+            >
+              <span className="truncate flex-1 min-w-0">
+                {truncateTitle(context.title)}
+              </span>
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-red-500 flex-shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeContext(context.tabId);
+                }}
+              />
+            </Button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };

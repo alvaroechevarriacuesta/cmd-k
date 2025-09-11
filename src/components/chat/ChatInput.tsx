@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 // import { useEchoModels } from '@/hooks/useEchoModels';
 import { type SupportedModel } from "@merit-systems/echo-typescript-sdk";
 import { ContextInfo } from "./ContextInfo";
+import { type Context } from "./ChatWindow";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -10,6 +11,8 @@ interface ChatInputProps {
   isFetchingContext?: boolean;
   providerModel: SupportedModel;
   setProviderModel: (providerModel: SupportedModel) => void;
+  contexts: Context[];
+  setContexts: React.Dispatch<React.SetStateAction<Context[]>>;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -19,6 +22,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isFetchingContext = false,
   providerModel,
   setProviderModel,
+  contexts,
+  setContexts,
 }) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -88,6 +93,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               model={providerModel}
               setProviderModel={setProviderModel}
               sendMessage={handleSendMessage}
+              contexts={contexts}
+              setContexts={setContexts}
             />
           </div>
         </div>

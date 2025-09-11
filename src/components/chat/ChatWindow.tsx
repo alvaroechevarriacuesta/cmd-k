@@ -47,9 +47,27 @@ export const ChatWindow: React.FC = () => {
 
     port.onMessage.addListener((message) => {
       if (message.action === "ADD_CONTEXT") {
+        const incomingContext = message.context;
+        
         setContexts((prev) => {
-          const newContexts = [...prev, message.context];
-          return newContexts;
+          // Check if a context with the same tabId already exists
+          const existingTabIndex = prev.findIndex(context => context.tabId === incomingContext.tabId);
+          
+          if (existingTabIndex !== -1) {
+            // Tab ID already exists - only update if URL is different
+            const existingContext = prev[existingTabIndex];
+            if (existingContext.url !== incomingContext.url) {
+              // URL is different, update the context with new title and URL
+              const newContexts = [...prev];
+              newContexts[existingTabIndex] = incomingContext;
+              return newContexts;
+            }
+            // Same tab ID and same URL, no update needed
+            return prev;
+          }
+          
+          // New tab ID, add it to the list
+          return [...prev, incomingContext];
         });
       }
     });
@@ -61,7 +79,7 @@ export const ChatWindow: React.FC = () => {
     return () => {
       port.disconnect();
     };
-  }, []);
+  }, []); 
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -199,6 +217,8 @@ export const ChatWindow: React.FC = () => {
         onSend={handleSendMessage}
         disabled={!providerModel}
         providerModel={providerModel}
+        contexts={contexts}
+        setContexts={setContexts}
         setProviderModel={setProviderModel}
         isGenerating={isGenerating}
         isFetchingContext={isFetchingContext}
