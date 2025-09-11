@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 // import { useEchoModels } from '@/hooks/useEchoModels';
 import { type SupportedModel } from "@merit-systems/echo-typescript-sdk";
 import { ContextInfo } from "./ContextInfo";
@@ -22,27 +22,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    // Listen for focus messages from background script
-    const handleMessage = (message: { action: string }) => {
-      if (message.action === "FOCUS_CHAT_INPUT") {
-        console.log("focusing chat input");
-        textareaRef.current?.focus();
-      }
-    };
-
-    chrome.commands.onCommand.addListener((command) => {
-      if (command === "open-side-panel") {
-        textareaRef.current?.focus();
-      }
-    });
-    chrome.runtime.onMessage.addListener(handleMessage);
-
-    return () => {
-      chrome.runtime.onMessage.removeListener(handleMessage);
-    };
-  }, []);
 
   const handleSendMessage = () => {
     if (!input.trim() || disabled || isGenerating || isFetchingContext) return;

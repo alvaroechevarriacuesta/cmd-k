@@ -1,5 +1,7 @@
 import { authenticate, refreshTokens } from "@/lib/echoAuth";
 
+let sidePanelPort: chrome.runtime.Port | null = null;
+
 chrome.runtime.onInstalled.addListener(async () => {
   console.log("Web Cmd+K is installed");
 
@@ -24,7 +26,7 @@ chrome.commands.onCommand.addListener((command) => {
       if (tabId) {
         console.log("Opening side panel on tab:", tabId);
         chrome.sidePanel.open({ tabId });
-        chrome.runtime.sendMessage({ action: "FOCUS_CHAT_INPUT" });
+        sendContextToSidePanel(tabs[0]);
       } else {
         console.warn("No active tab found");
       }
@@ -269,3 +271,38 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   return true; // Keep the message channel open for async responses
 });
+
+// Handle port connections from the side panel
+chrome.runtime.onConnect.addListener((port) => {
+  console.log("Port connected:", port.name);
+
+  if (port.name === "sidePanelPort") {
+    sidePanelPort = port;
+
+    port.onDisconnect.addListener(() => {
+      console.log("Side panel port disconnected");
+      sidePanelPort = null;
+    });
+
+    port.onMessage.addListener((message) => {
+      console.log("Message received from side panel:", message);
+    });
+  }
+});
+
+function sendContextToSidePanel(tab: chrome.tabs.Tab) {
+  console.log("Sending context to side panel:", tab);
+
+  if (sidePanelPort) {
+    sidePanelPort.postMessage({
+      action: "ADD_CONTEXT",
+      context: {
+        tabId: tab.id,
+        url: tab.url,
+        title: tab.title,
+      },
+    });
+  } else {
+    console.warn("Side panel port not connected");
+  }
+}

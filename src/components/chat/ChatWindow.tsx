@@ -17,6 +17,12 @@ export interface Message {
   isStreaming?: boolean;
 }
 
+export interface Context {
+  tabId: number;
+  url: string;
+  title: string;
+}
+
 const DEFAULT_PROVIDER_MODEL: SupportedModel = {
   provider: "openai",
   model_id: "gpt-4o-mini",
@@ -28,11 +34,34 @@ export const ChatWindow: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingContext, setIsFetchingContext] = useState(false);
+  const [contexts, setContexts] = useState<Context[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [providerModel, setProviderModel] = useState<SupportedModel>(
     DEFAULT_PROVIDER_MODEL,
   );
   const { openai, anthropic, google } = useEchoModelProviders();
+
+  // Connect to the side panel port and listen for context updates
+  useEffect(() => {
+    const port = chrome.runtime.connect({ name: "sidePanelPort" });
+
+    port.onMessage.addListener((message) => {
+      if (message.action === "ADD_CONTEXT") {
+        setContexts((prev) => {
+          const newContexts = [...prev, message.context];
+          return newContexts;
+        });
+      }
+    });
+
+    port.onDisconnect.addListener(() => {
+      console.log("Port disconnected from ChatWindow");
+    });
+
+    return () => {
+      port.disconnect();
+    };
+  }, []);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
