@@ -24,6 +24,7 @@ chrome.commands.onCommand.addListener((command) => {
       if (tabId) {
         console.log("Opening side panel on tab:", tabId);
         chrome.sidePanel.open({ tabId });
+        chrome.runtime.sendMessage({ action: "FOCUS_CHAT_INPUT" });
       } else {
         console.warn("No active tab found");
       }
