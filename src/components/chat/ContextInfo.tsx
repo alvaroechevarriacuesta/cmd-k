@@ -143,17 +143,22 @@ interface ContextInfoListProps {
   setContexts?: React.Dispatch<React.SetStateAction<Context[]>>;
 }
 
-const ContextInfoList: React.FC<ContextInfoListProps> = ({ contexts, setContexts }) => {
+const ContextInfoList: React.FC<ContextInfoListProps> = ({
+  contexts,
+  setContexts,
+}) => {
   const removeContext = (tabIdToRemove: number) => {
     if (setContexts) {
-      setContexts((prevContexts) => 
-        prevContexts.filter((context) => context.tabId !== tabIdToRemove)
+      setContexts((prevContexts) =>
+        prevContexts.filter((context) => context.tabId !== tabIdToRemove),
       );
     }
   };
 
   const truncateTitle = (title: string, maxLength: number = 25) => {
-    return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title;
+    return title.length > maxLength
+      ? `${title.substring(0, maxLength)}...`
+      : title;
   };
 
   // Only show first 4 contexts
@@ -193,7 +198,7 @@ const ContextInfoList: React.FC<ContextInfoListProps> = ({ contexts, setContexts
           </span>
         )}
       </div>
-      
+
       {/* Second row - contexts 3 and 4 if they exist */}
       {displayedContexts.length > 2 && (
         <div className="flex items-center gap-1 overflow-hidden">

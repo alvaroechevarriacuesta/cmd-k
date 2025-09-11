@@ -48,11 +48,13 @@ export const ChatWindow: React.FC = () => {
     port.onMessage.addListener((message) => {
       if (message.action === "ADD_CONTEXT") {
         const incomingContext = message.context;
-        
+
         setContexts((prev) => {
           // Check if a context with the same tabId already exists
-          const existingTabIndex = prev.findIndex(context => context.tabId === incomingContext.tabId);
-          
+          const existingTabIndex = prev.findIndex(
+            (context) => context.tabId === incomingContext.tabId,
+          );
+
           if (existingTabIndex !== -1) {
             // Tab ID already exists - only update if URL is different
             const existingContext = prev[existingTabIndex];
@@ -65,7 +67,7 @@ export const ChatWindow: React.FC = () => {
             // Same tab ID and same URL, no update needed
             return prev;
           }
-          
+
           // New tab ID, add it to the list
           return [...prev, incomingContext];
         });
@@ -79,7 +81,7 @@ export const ChatWindow: React.FC = () => {
     return () => {
       port.disconnect();
     };
-  }, []); 
+  }, []);
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
