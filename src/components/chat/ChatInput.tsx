@@ -22,7 +22,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   useEffect(() => {
     // Listen for focus messages from background script
     const handleMessage = (message: { action: string }) => {
@@ -42,7 +42,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     return () => {
       chrome.runtime.onMessage.removeListener(handleMessage);
     };
-  }, [])
+  }, []);
 
   const handleSendMessage = () => {
     if (!input.trim() || disabled || isGenerating || isFetchingContext) return;
@@ -75,8 +75,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       target.style.height = Math.min(target.scrollHeight, 200) + "px";
     }
   };
-
-  
 
   return (
     <div className="flex-shrink-0 p-4">
