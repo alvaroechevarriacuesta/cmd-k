@@ -133,7 +133,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     echo_refresh_token_expires_at:
                       response.tokenData.refreshTokenExpiresAt,
                   });
-                  sendResponse({ success: true, token: response.tokenData.accessToken });
+                  sendResponse({
+                    success: true,
+                    token: response.tokenData.accessToken,
+                  });
                 } else {
                   console.error("Error refreshing tokens:", response.error);
                   sendResponse({ token: null });

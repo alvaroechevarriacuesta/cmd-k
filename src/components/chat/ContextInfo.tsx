@@ -78,7 +78,7 @@ const ProviderInfo: React.FC<ProviderInfoProps> = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="default"
-            className="text-black px-1 py-1 pl-2 rounded-md text-xs flex items-center gap-2 max-w-[40%] h-full justify-start hover:bg-gray-200 hover:border-gray-200 "
+          className="text-black px-1 py-1 pl-2 rounded-md text-xs flex items-center gap-2 max-w-[40%] h-full justify-start hover:bg-gray-200 hover:border-gray-200 "
         >
           <img
             src={iconSrc}
