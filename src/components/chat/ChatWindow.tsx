@@ -4,8 +4,8 @@ import { streamText } from "ai";
 import { MessageList } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import {
-  getCurrentTabContent,
-  formatTabContentForPrompt,
+  getContextFromTabs,
+  formatMultipleTabContentsForSystemPrompt,
 } from "@/lib/tabContent";
 import { type SupportedModel } from "@merit-systems/echo-typescript-sdk";
 
@@ -104,29 +104,16 @@ export const ChatWindow: React.FC = () => {
     setIsFetchingContext(true);
 
     try {
-      // Fetch current tab content
-      const tabContent = await getCurrentTabContent();
+      // Fetch current tab content from all contexts
+      const tabContents = await getContextFromTabs(contexts);
       setIsFetchingContext(false);
       setIsGenerating(true);
 
-      // Convert conversation history to AI SDK format
-      const conversationHistory = updatedMessages.map((msg, index) => {
-        let content = msg.text;
-
-        // Add tab content as context to the latest user message
-        if (
-          msg.isUser &&
-          index === updatedMessages.length - 1 &&
-          tabContent.content
-        ) {
-          content = `${msg.text}${formatTabContentForPrompt(tabContent)}`;
-        }
-
-        return {
-          role: (msg.isUser ? "user" : "assistant") as "user" | "assistant",
-          content,
-        };
-      });
+      // Convert conversation history to AI SDK format without adding tab content to messages
+      const conversationHistory = updatedMessages.map((msg) => ({
+        role: (msg.isUser ? "user" : "assistant") as "user" | "assistant",
+        content: msg.text,
+      }));
 
       // Get the appropriate provider client based on the selected provider
       const getProviderClient = () => {
@@ -148,10 +135,22 @@ export const ChatWindow: React.FC = () => {
         throw new Error(`Provider ${providerModel.provider} not available`);
       }
 
+      // Create system prompt with optional tab content context
+      const baseSystemPrompt = `You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with \`\`\``;
+      const tabContextPrompt =
+        formatMultipleTabContentsForSystemPrompt(tabContents);
+      const systemPrompt = baseSystemPrompt + tabContextPrompt;
+
+      console.log("=== SYSTEM PROMPT DEBUG ===");
+      console.log("Base system prompt:", baseSystemPrompt);
+      console.log("Tab contexts count:", tabContents.length);
+      console.log("Tab context prompt:", tabContextPrompt);
+      console.log("Full system prompt:", systemPrompt);
+      console.log("=== END SYSTEM PROMPT DEBUG ===");
+
       const response = await streamText({
         model: await providerClient(providerModel.model_id),
-        system:
-          "You are a helpful assistant. The current date and time is ${new Date().toLocaleString()}. Whenever you are asked to write code, you must include a language with ```",
+        system: systemPrompt,
         messages: conversationHistory,
       });
 
