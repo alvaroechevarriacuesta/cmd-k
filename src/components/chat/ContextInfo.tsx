@@ -17,7 +17,10 @@ interface ContextInfoProps {
   setProviderModel: (model: SupportedModel) => void;
 }
 
-export const ContextInfo: React.FC<ContextInfoProps> = ({ model, setProviderModel }) => {
+export const ContextInfo: React.FC<ContextInfoProps> = ({
+  model,
+  setProviderModel,
+}) => {
   return (
     <div className="h-[40px] mt-2 rounded-md text-white flex items-center justify-start text-sm">
       <ProviderInfo {...model} setProviderModel={setProviderModel} />
@@ -29,7 +32,11 @@ interface ProviderInfoProps extends SupportedModel {
   setProviderModel: (model: SupportedModel) => void;
 }
 
-const ProviderInfo: React.FC<ProviderInfoProps> = ({ provider, model_id, setProviderModel }) => {
+const ProviderInfo: React.FC<ProviderInfoProps> = ({
+  provider,
+  model_id,
+  setProviderModel,
+}) => {
   const { models } = useEchoModels();
   const providers = ["openai", "anthropic", "gemini", "openrouter"];
   const getProviderIcon = () => {

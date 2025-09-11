@@ -17,12 +17,7 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <CmdkLogo />
             </div>
-            <div className="flex items-center gap-2">
-              <p className="text-sm">{user?.name || user?.email}</p>
-              <p className="text-sm">
-                {balance?.balance.toFixed(2)} {balance?.currency}
-              </p>
-            </div>
+            <h3 className="text-lg font-bold">{user?.name || user?.email}</h3>
             <div className="flex items-center gap-2">
               <EchoSignin />
             </div>

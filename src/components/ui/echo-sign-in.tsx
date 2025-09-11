@@ -49,7 +49,7 @@ export const EchoSignin: React.FC<EchoSigninProps> = ({ className }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <MeritLogo className="w-8 h-8" />
-      {isAuthenticated ? "Sign Out" : "Sign In"}
+      {isAuthenticated ? null : <p>Sign In</p>}
     </Button>
   );
 };
