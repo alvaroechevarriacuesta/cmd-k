@@ -2,6 +2,7 @@ import React from "react";
 import type { SupportedModel } from "@merit-systems/echo-typescript-sdk";
 import { Button } from "@/components/ui/button";
 import { useEchoModels } from "@/hooks/useEchoModels";
+import { ArrowUp } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,16 +16,34 @@ import {
 interface ContextInfoProps {
   model: SupportedModel;
   setProviderModel: (model: SupportedModel) => void;
+  sendMessage: () => void;
+}
+
+interface SendButtonProps {
+  sendMessage: () => void;
 }
 
 export const ContextInfo: React.FC<ContextInfoProps> = ({
   model,
   setProviderModel,
+  sendMessage,
 }) => {
   return (
     <div className="h-[40px] mt-2 rounded-md text-white flex items-center justify-start text-sm">
       <ProviderInfo {...model} setProviderModel={setProviderModel} />
+      <SendButton sendMessage={sendMessage} />
     </div>
+  );
+};
+
+export const SendButton: React.FC<SendButtonProps> = ({ sendMessage }) => {
+  return (
+    <Button
+      onClick={sendMessage}
+      className="ml-auto h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors duration-150"
+    >
+      <ArrowUp className="h-4 w-4" />
+    </Button>
   );
 };
 
@@ -59,12 +78,12 @@ const ProviderInfo: React.FC<ProviderInfoProps> = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="default"
-          className="text-black px-3 py-1 rounded-md text-xs flex items-center gap-2 w-32 h-6 justify-start hover:bg-gray-200 hover:border-gray-200 "
+            className="text-black px-1 py-1 pl-2 rounded-md text-xs flex items-center gap-2 max-w-[40%] h-full justify-start hover:bg-gray-200 hover:border-gray-200 "
         >
           <img
             src={iconSrc}
             alt={`${provider} icon`}
-            className="w-3 h-3 flex-shrink-0"
+            className="h-6 w-6 flex-shrink-0 p-1"
           />
           <span className="truncate">{model_id}</span>
         </Button>

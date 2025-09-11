@@ -88,6 +88,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <ContextInfo
               model={providerModel}
               setProviderModel={setProviderModel}
+              sendMessage={handleSendMessage}
             />
           </div>
         </div>
